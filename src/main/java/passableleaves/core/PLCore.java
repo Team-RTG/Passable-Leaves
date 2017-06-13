@@ -27,7 +27,7 @@ public class PLCore implements IFMLLoadingPlugin {
 
     @Override
     public String[] getASMTransformerClass() {
-        return new String[0];
+        return new String[] {"passableleaves.core.PLTransformer"};
     }
 
     @Override
@@ -47,7 +47,7 @@ public class PLCore implements IFMLLoadingPlugin {
 
     @Override
     public String getAccessTransformerClass() {
-        return "passableleaves.core.PLTransformer";
+        return null;
     }
 
 }
