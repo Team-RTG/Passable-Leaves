@@ -21,7 +21,7 @@ import passableleaves.reference.ModInfo;
     modid = ModInfo.MOD_ID,
     name = ModInfo.MOD_NAME,
     version = ModInfo.MOD_VERSION,
-    dependencies = "required-after:Forge@[" + ModInfo.MCF_MINVER + "," + ModInfo.MCF_MAXVER + ")",
+    dependencies = "required-after:forge@[" + ModInfo.MCF_MINVER + "," + ModInfo.MCF_MAXVER + ")",
     acceptableRemoteVersions = "*"
 )
 public class PassableLeaves {
