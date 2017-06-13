@@ -5,6 +5,8 @@ import java.util.Map;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
+import passableleaves.reference.ModInfo;
+
 /**
  * This class was originally written by HellFirePvP for the Appalachia addon for RTG.
  * It was extracted from Appalachia by WhichOnesPink so that it could be a standalone mod.
@@ -14,7 +16,7 @@ import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
  * Date: 12.02.2017 / 15:23
  */
 @IFMLLoadingPlugin.Name(value = "PLCore")
-@IFMLLoadingPlugin.MCVersion(value = "1.11.2")
+@IFMLLoadingPlugin.MCVersion(value = ModInfo.MC_VERSION)
 @IFMLLoadingPlugin.TransformerExclusions({"passableleaves.core"})
 @IFMLLoadingPlugin.SortingIndex(1001)
 public class PLCore implements IFMLLoadingPlugin {
