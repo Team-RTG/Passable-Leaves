@@ -14,7 +14,7 @@ import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
  * Date: 12.02.2017 / 15:23
  */
 @IFMLLoadingPlugin.Name(value = "PLCore")
-@IFMLLoadingPlugin.MCVersion(value = "1.10.2")
+@IFMLLoadingPlugin.MCVersion(value = "1.11.2")
 @IFMLLoadingPlugin.TransformerExclusions({"passableleaves.core"})
 @IFMLLoadingPlugin.SortingIndex(1001)
 public class PLCore implements IFMLLoadingPlugin {

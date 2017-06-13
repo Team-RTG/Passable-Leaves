@@ -34,7 +34,7 @@ public class PLTransformer implements IClassTransformer {
 
         //TODO keep those updated with minecraft updates as SRG names or parameters may change!
         String methodNameGetCollisionBox = PLCore.isDebofEnabled ? "func_180646_a" : "getCollisionBoundingBox";
-        String methodDescGetCollisionBox = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/AxisAlignedBB;";
+        String methodDescGetCollisionBox = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/AxisAlignedBB;";
 
         String methodNameIsPassable = PLCore.isDebofEnabled ? "func_176205_b" : "isPassable";
         String methodDescIsPassable = "(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)Z";
@@ -82,7 +82,7 @@ public class PLTransformer implements IClassTransformer {
         //TODO keep track of parameter changes between minecraft updates!
         LocalVariableNode lvnThis = new LocalVariableNode("this", "Lnet/minecraft/block/BlockLeaves;", null, startLabel, endLabel, 0);
         LocalVariableNode lvnPState = new LocalVariableNode("inState", "Lnet/minecraft/block/state/IBlockState;", null, startLabel, endLabel, 1);
-        LocalVariableNode lvnPWorld = new LocalVariableNode("inWorld", "Lnet/minecraft/world/World;", null, startLabel, endLabel, 2);
+        LocalVariableNode lvnPWorld = new LocalVariableNode("inWorld", "Lnet/minecraft/world/IBlockAccess;", null, startLabel, endLabel, 2);
         LocalVariableNode lvnPPos = new LocalVariableNode("inPos", "Lnet/minecraft/util/math/BlockPos;", null, startLabel, endLabel, 3);
         getCollisionBox.localVariables = Lists.newArrayList(lvnThis, lvnPState, lvnPWorld, lvnPPos);
 
