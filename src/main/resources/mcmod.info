@@ -1,14 +1,14 @@
 [{
   "modid": "${modid}",
   "name": "${name}",
-  "description": "${description}",
+  "description": "Minecraft core mod that makes leaves passable.",
   "version": "${version}",
   "mcversion": "${mcversion}",
-  "url": "${url}",
+  "url": "https://github.com/Team-RTG/PassableLeaves",
   "updateUrl": "",
-  "authorList": [${authorList}],
-  "credits": "${credits}",
-  "logoFile": "${logoFile}",
+  "authorList": ["Team-RTG"],
+  "credits": "Based on code donated by HellFirePvP for the Appalachia mod.",
+  "logoFile": "assets/passableleaves/logo.png",
   "screenshots": [],
   "dependencies": []
 }]
