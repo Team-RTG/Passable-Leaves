@@ -1,4 +1,4 @@
-package teamrtg.passableleaves;
+package teamrtg.passableleaves.asm;
 
 import net.minecraft.launchwrapper.IClassTransformer;
 
@@ -19,8 +19,8 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import teamrtg.passableleaves.PassableLeavesTransformer.Transforms.Fields;
-import teamrtg.passableleaves.PassableLeavesTransformer.Transforms.Methods;
+import teamrtg.passableleaves.asm.PassableLeavesTransformer.Transforms.Fields;
+import teamrtg.passableleaves.asm.PassableLeavesTransformer.Transforms.Methods;
 
 /**
  * This class was originally written by HellFirePvP for the Appalachia addon for RTG.

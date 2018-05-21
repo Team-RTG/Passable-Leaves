@@ -1,4 +1,4 @@
-package teamrtg.passableleaves;
+package teamrtg.passableleaves.asm;
 
 import java.util.Map;
 
@@ -28,7 +28,7 @@ public class PassableLeavesCore implements IFMLLoadingPlugin {
     static boolean isDeobf() { return !deobfEnvironment;}
 
     public PassableLeavesCore() { LOGGER.info("PassableLeavesCore coremod initialized"); }
-    @Override public String[] getASMTransformerClass() { return new String[] {"teamrtg.passableleaves.PassableLeavesTransformer"}; }
+    @Override public String[] getASMTransformerClass() { return new String[] {"teamrtg.passableleaves.asm.PassableLeavesTransformer"}; }
     @Override public String getModContainerClass() { return null; }
     @Override public String getSetupClass() { return null; }
     @Override public void injectData(Map<String, Object> data) { deobfEnvironment = (boolean) data.get("runtimeDeobfuscationEnabled"); }

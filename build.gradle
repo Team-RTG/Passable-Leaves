@@ -14,12 +14,30 @@ sourceCompatibility = targetCompatibility = 1.8
 group = project.package_base
 archivesBaseName = "${project.name}" + '-' + (project.mc_version as String)
 version = project.mod_version
+def coremodClassifier = "coremod"
 
-jar.manifest.attributes(
-    'FMLAT': 'passableleaves_at.cfg',
-    'FMLCorePlugin': 'teamrtg.passableleaves.PassableLeavesCore',
-    'FMLCorePluginContainsFMLMod': 'true'
-)
+task coreJar(type: Jar) {
+    from(sourceSets.main.output) {
+        include 'teamrtg/passableleaves/asm/**'
+    }
+    classifier coremodClassifier
+    manifest {
+        attributes 'FMLCorePlugin': 'teamrtg.passableleaves.asm.PassableLeavesCore'
+        attributes 'Maven-Artifact': project.group+':'+archivesBaseName+'-'+coremodClassifier+':'+version
+    }
+}
+
+jar {
+    from(coreJar.archivePath.absolutePath) {
+        include '*'
+    }
+    exclude 'teamrtg/passableleaves/asm/**'
+    manifest {
+        attributes 'FMLAT': 'passableleaves_at.cfg'
+        attributes 'ContainedDeps': coreJar.archivePath.name
+    }
+    dependsOn coreJar
+}
 
 minecraft {
     version = project.mcf_version
