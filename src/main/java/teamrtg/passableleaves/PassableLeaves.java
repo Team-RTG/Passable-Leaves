@@ -429,7 +429,7 @@ public class PassableLeaves
                 EntityLivingBase livingEntity = (EntityLivingBase)entity;
 
                 // play a sound when an entity is moving through leaves
-                if (world.getTotalWorldTime() % 10 == 0 && (livingEntity.posX != livingEntity.prevPosX || livingEntity.posZ != livingEntity.prevPosZ || livingEntity.fallDistance > 0.0f)) {
+                if (livingEntity.fallDistance > 3.0f || (world.getTotalWorldTime() % 5 == 0 && (livingEntity.posX != livingEntity.prevPosX || livingEntity.posZ != livingEntity.prevPosZ || livingEntity.fallDistance > 0.0f))) {
                     world.playSound(null, livingEntity.getPosition(), SoundEvents.BLOCK_GRASS_BREAK,
                         SoundCategory.BLOCKS, SoundType.PLANT.getVolume() * 0.8f, SoundType.PLANT.getPitch() * 0.45f);
                 }
