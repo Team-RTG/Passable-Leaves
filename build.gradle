@@ -4,37 +4,44 @@ buildscript {
         maven { url = "http://files.minecraftforge.net/maven" }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath "net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT"
     }
 }
-apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: "net.minecraftforge.gradle.forge"
+apply from: 'build-common.gradle'
 
 sourceCompatibility = targetCompatibility = 1.8
 
 group = project.package_base
-archivesBaseName = "${project.name}" + '-' + (project.mc_version as String)
+archivesBaseName = "${project.name}" + "-" + (project.mc_version as String)
 version = project.mod_version
 def coremodClassifier = "coremod"
 
 task coreJar(type: Jar) {
     from(sourceSets.main.output) {
-        include 'teamrtg/passableleaves/asm/**'
+        include "teamrtg/passableleaves/asm/**"
     }
     classifier coremodClassifier
     manifest {
-        attributes 'FMLCorePlugin': 'teamrtg.passableleaves.asm.PassableLeavesCore'
-        attributes 'Maven-Artifact': project.group+':'+archivesBaseName+'-'+coremodClassifier+':'+version
+        attributes ([
+            "FMLCorePlugin": "teamrtg.passableleaves.asm.PassableLeavesCore",
+            "Maven-Artifact": "${project.group}:${archivesBaseName}-${coremodClassifier}:${project.version}"
+        ])
     }
 }
 
 jar {
     from(coreJar.archivePath.absolutePath) {
-        include '*'
+        include "*"
     }
-    exclude 'teamrtg/passableleaves/asm/**'
+    exclude "teamrtg/passableleaves/asm/**"
     manifest {
-        attributes 'FMLAT': 'passableleaves_at.cfg'
-        attributes 'ContainedDeps': coreJar.archivePath.name
+        attributes([
+            "FMLAT": "passableleaves_at.cfg",
+            "ContainedDeps": coreJar.archivePath.name,
+            "Maven-Artifact": "${project.group}:${archivesBaseName}:${project.version}"
+        ])
+
     }
     dependsOn coreJar
 }
@@ -42,45 +49,25 @@ jar {
 minecraft {
     version = project.mcf_version
     mappings = project.mcp_mappings
-    useDepAts = true
     runDir = "run"
     makeObfSourceJar = false
-    replace '@MOD_VERSION@', project.version
-    replace '@MC_VERSION@', project.mc_version
-    replace '0.0-MCF+MINVER', project.mcf_minver
-    replace '9001.0-MCF+MAXVER', project.mcf_maxver
-    replaceIn 'PassableLeaves.java'
+    replace "@MOD_VERSION@", project.version
+    replace "@MC_VERSION@", project.mc_version
+    replace "0.0-MCF+MINVER", project.mcf_minver
+    replace "9001.0-MCF+MAXVER", project.mcf_maxver
+    replaceIn "PassableLeaves.java"
 }
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
+        include "mcmod.info"
         expand ([
-            'modid'       : project.mod_id,
-            'name'        : project.mod_name,
-            'version'     : project.mod_version,
-            'mcversion'   : project.mc_version,
+            "modid"       : project.mod_id,
+            "name"        : project.mod_name,
+            "version"     : project.mod_version,
+            "mcversion"   : project.mc_version,
         ])
     }
-    from(sourceSets.main.resources.srcDirs) {exclude 'mcmod.info'}
-    rename '(.+_at.cfg)', 'META-INF/$1'
-}
-
-// For a debugging session used 'gradle -DEBUG [runClient|runServer]'
-allprojects {
-    tasks.withType(JavaExec) {
-// disabled to possibly alleviate testing issues on cumputers with low memory
-//      jvmArgs '-Xms2G', '-Xmx4G'
-        if (System.getProperty("EBUG")!=null)
-            jvmArgs '-agentlib:jdwp=transport=dt_socket,address=localhost:5005,server=y,suspend=y'
-    }
-}
-
-// use -Dwarn|-Dwarnall CLI arguement for verbose compiler warnings
-// -Dwarn covers the 3 most common warnings only
-tasks.withType(JavaCompile) {
-    if (System.getProperty("warn") != null)
-        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:rawtypes" << "-Xlint:deprecation"
-    if (System.getProperty("warnall") != null)
-        options.compilerArgs << "-Xlint:all"
+    from(sourceSets.main.resources.srcDirs) {exclude "mcmod.info"}
+    rename "(.+_at.cfg)", "META-INF/\$1"
 }
