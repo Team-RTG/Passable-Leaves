@@ -13,7 +13,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
@@ -160,7 +159,7 @@ public class PassableLeaves
             @Override public int getRequiredPermissionLevel() { return ACCESS_ALL; }
             @Override public String getName() { return NAME; }
             @Override public String getUsage(ICommandSender sender) { return getUsageForBasicCommand(this, this.parentName, LANG_KEY_ADDENDUM_STATUS); }
-            @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
                 sender.sendMessage(new TextComponentString("  ")
                     .appendSibling(new TextComponentTranslation(LANG_KEY_SETTINGS_HEADER).setStyle(STYLE_DKGREEN)).appendText(":")
                 );
@@ -190,7 +189,7 @@ public class PassableLeaves
             @Override public int getRequiredPermissionLevel() { return ACCESS_ADMIN; }
             @Override public String getName() { return NAME; }
             @Override public String getUsage(ICommandSender sender) { return getUsageForBasicCommand(this, this.parentName, LANG_KEY_ADDENDUM_SAVE); }
-            @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
                 sender.sendMessage(new TextComponentString("  ").appendText("Saving current settings to PassableLeaves config.").setStyle(STYLE_DKGREEN));
                 PLConfig.sync();
             }
@@ -218,7 +217,7 @@ public class PassableLeaves
                 @Override public int getRequiredPermissionLevel() { return ACCESS_OPS; }
                 @Override public String getName() { return NAME; }
                 @Override public String getUsage(ICommandSender sender) { return getUsageForPropCommand(this, this.parentName, this.cfgProp); }
-                @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException { executor(this, sender, args, this.cfgProp); }
+                @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) { executor(this, sender, args, this.cfgProp); }
             }
 
             static final class CommandFallDamageThreshold extends CommandBase {
@@ -229,7 +228,7 @@ public class PassableLeaves
                 @Override public int getRequiredPermissionLevel() { return ACCESS_OPS; }
                 @Override public String getName() { return NAME; }
                 @Override public String getUsage(ICommandSender sender) { return getUsageForPropCommand(this, this.parentName, this.cfgProp); }
-                @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException { executor(this, sender, args, this.cfgProp); }
+                @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) { executor(this, sender, args, this.cfgProp); }
             }
         }
 
@@ -255,7 +254,7 @@ public class PassableLeaves
                 @Override public int getRequiredPermissionLevel() { return ACCESS_OPS; }
                 @Override public String getName() { return NAME; }
                 @Override public String getUsage(ICommandSender sender) { return getUsageForPropCommand(this, this.parentName, this.cfgProp); }
-                @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException { executor(this, sender, args, this.cfgProp); }
+                @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) { executor(this, sender, args, this.cfgProp); }
             }
 
             static final class CommandSpeedVertical extends CommandBase {
@@ -266,7 +265,7 @@ public class PassableLeaves
                 @Override public int getRequiredPermissionLevel() { return ACCESS_OPS; }
                 @Override public String getName() { return NAME; }
                 @Override public String getUsage(ICommandSender sender) { return getUsageForPropCommand(this, this.parentName, this.cfgProp); }
-                @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException { executor(this, sender, args, this.cfgProp); }
+                @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) { executor(this, sender, args, this.cfgProp); }
             }
         }
 
@@ -283,9 +282,9 @@ public class PassableLeaves
                 .appendSibling(new TextComponentString(cfgProp.getMaxValue()).setStyle(STYLE_GRAY)).appendText(">").getFormattedText();
         }
 
-        private static void executor(ICommand cmd, ICommandSender sender, String[] args, Property cfgProp) throws CommandException {
+        private static void executor(ICommand cmd, ICommandSender sender, String[] args, Property cfgProp) {
             if (args.length == 0) {
-                sender.sendMessage(new TextComponentTranslation("  ")
+                sender.sendMessage(new TextComponentString("  ")
                     .appendSibling(new TextComponentTranslation(cfgProp.getLanguageKey()).setStyle(STYLE_DKAQUA))
                     .appendText(" ").appendSibling(new TextComponentTranslation(LANG_KEY_CURRENT_SETTING))
                     .appendText(" ").appendSibling(new TextComponentString(cfgProp.getString()).setStyle(STYLE_AQUA))
