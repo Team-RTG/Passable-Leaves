@@ -1,12 +1,10 @@
 package teamrtg.passableleaves;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.google.common.collect.Lists;
-import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -26,12 +24,9 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.*;
 import net.minecraft.world.World;
+
 import net.minecraftforge.common.config.ConfigElement;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
@@ -47,6 +42,9 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.server.command.CommandTreeBase;
+
+import com.google.common.collect.Lists;
+import mcp.MethodsReturnNonnullByDefault;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -429,9 +427,9 @@ public class PassableLeaves
                 EntityLivingBase livingEntity = (EntityLivingBase)entity;
 
                 // play a sound when an entity is moving through leaves
-                if (livingEntity.fallDistance > 3.0f || (world.getTotalWorldTime() % 5 == 0 && (livingEntity.posX != livingEntity.prevPosX || livingEntity.posZ != livingEntity.prevPosZ || livingEntity.fallDistance > 0.0f))) {
-                    world.playSound(null, livingEntity.getPosition(), SoundEvents.BLOCK_GRASS_BREAK,
-                        SoundCategory.BLOCKS, SoundType.PLANT.getVolume() * 0.8f, SoundType.PLANT.getPitch() * 0.45f);
+                if (world.getTotalWorldTime() % 2 == 0 && (livingEntity.posX != livingEntity.prevPosX || livingEntity.posY != livingEntity.prevPosY || livingEntity.posZ != livingEntity.prevPosZ)) {
+                    world.playSound(null, livingEntity.getPosition(), SoundEvents.BLOCK_GRASS_HIT,
+                        SoundCategory.BLOCKS, SoundType.PLANT.getVolume() * 0.5f, SoundType.PLANT.getPitch() * 0.45f);
                 }
 
                 // Riding a mob won't protect you
