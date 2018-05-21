@@ -354,7 +354,7 @@ public class PassableLeaves
                 MOD_ID,
                 "Speed Reduction - Horizontal",
                 75,
-                "The reduced horizontal speed when passing through leaves. (% of normal)",
+                "The reduced horizontal speed when passing through leaves. (% of normal - this setting has no effect for now)",
                 0,
                 100
             ).setLanguageKey(MOD_ID+".config.speedReductionHorizontal");
@@ -363,7 +363,7 @@ public class PassableLeaves
                 MOD_ID,
                 "Speed Reduction - Vertical",
                 75,
-                "The reduced vertical speed when passing through leaves. (% of normal)",
+                "The reduced vertical speed when passing through leaves. (% of normal - this setting has no effect for now)",
                 0,
                 100
             ).setLanguageKey(MOD_ID+".config.speedReductionVertical");
@@ -419,44 +419,40 @@ public class PassableLeaves
     @SuppressWarnings("WeakerAccess")
     public static void onEntityCollidedWithLeaves(World world, BlockPos pos, IBlockState state, Entity entity) {
 
-        // server-side
-        if (!world.isRemote) {
+        if (entity instanceof EntityLivingBase) {
 
-            if (entity instanceof EntityLivingBase) {
+            EntityLivingBase livingEntity = (EntityLivingBase)entity;
 
-                EntityLivingBase livingEntity = (EntityLivingBase)entity;
-
-                // play a sound when an entity is moving through leaves
-                if (world.getTotalWorldTime() % 2 == 0 && (livingEntity.posX != livingEntity.prevPosX || livingEntity.posY != livingEntity.prevPosY || livingEntity.posZ != livingEntity.prevPosZ)) {
-                    world.playSound(null, livingEntity.getPosition(), SoundEvents.BLOCK_GRASS_HIT,
-                        SoundCategory.BLOCKS, SoundType.PLANT.getVolume() * 0.5f, SoundType.PLANT.getPitch() * 0.45f);
-                }
-
-                // Riding a mob won't protect you
-                if (entity.isBeingRidden()) {
-                    for (Entity ent : entity.getPassengers()) {
-                        onEntityCollidedWithLeaves(world, pos, state, ent);
-                    }
-                }
-
-                // Reduce movement speed when inside of leaves, but allow players/mobs to jump out of them
-                if (!livingEntity.isJumping) {
-                    livingEntity.motionX *= PLConfig.getSpeedReductionHorizontal();
-                    livingEntity.motionZ *= PLConfig.getSpeedReductionHorizontal();
-                    livingEntity.motionY *= PLConfig.getSpeedReductionVertical();
-                }
-
-                // modify falling damage when falling into leaves
-                if (livingEntity.fallDistance > PLConfig.getFallDamageThreshold()) {
-                    livingEntity.fallDistance -= PLConfig.getFallDamageThreshold();
-                    PotionEffect pe = livingEntity.getActivePotionEffect(MobEffects.JUMP_BOOST);
-                    int amount = MathHelper.ceil(livingEntity.fallDistance * PLConfig.getFallDamageReduction() * ((pe == null) ? 1.0f : 0.9f));
-                    livingEntity.attackEntityFrom(DAMAGESOURCE_FALLINTOLEAVES, amount);
-                }
-
-                // reset fallDistance
-                if (livingEntity.fallDistance > 1f) { livingEntity.fallDistance = 1f; }
+            // play a sound when an entity is moving through leaves
+            if (world.getTotalWorldTime() % 2 == 0 && (livingEntity.posX != livingEntity.prevPosX || livingEntity.posY != livingEntity.prevPosY || livingEntity.posZ != livingEntity.prevPosZ)) {
+                world.playSound(null, livingEntity.getPosition(), SoundEvents.BLOCK_GRASS_HIT,
+                    SoundCategory.BLOCKS, SoundType.PLANT.getVolume() * 0.5f, SoundType.PLANT.getPitch() * 0.45f);
             }
+
+            // Riding a mob won't protect you
+            if (entity.isBeingRidden()) {
+                for (Entity ent : entity.getPassengers()) {
+                    onEntityCollidedWithLeaves(world, pos, state, ent);
+                }
+            }
+
+            // Reduce movement speed when inside of leaves, but allow players/mobs to jump out of them
+            if (!livingEntity.isJumping) {
+                entity.motionX *= 0.75d;
+                entity.motionY *= 0.75d;
+                entity.motionZ *= 0.75d;
+            }
+
+            // modify falling damage when falling into leaves
+            if (livingEntity.fallDistance > PLConfig.getFallDamageThreshold()) {
+                livingEntity.fallDistance -= PLConfig.getFallDamageThreshold();
+                PotionEffect pe = livingEntity.getActivePotionEffect(MobEffects.JUMP_BOOST);
+                int amount = MathHelper.ceil(livingEntity.fallDistance * PLConfig.getFallDamageReduction() * ((pe == null) ? 1.0f : 0.9f));
+                livingEntity.attackEntityFrom(DAMAGESOURCE_FALLINTOLEAVES, amount);
+            }
+
+            // reset fallDistance
+            if (livingEntity.fallDistance > 1f) { livingEntity.fallDistance = 1f; }
         }
     }
 
