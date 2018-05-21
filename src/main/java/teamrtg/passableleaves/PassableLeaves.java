@@ -56,8 +56,7 @@ import org.apache.logging.log4j.Logger;
     name = PassableLeaves.MOD_NAME,
     version = PassableLeaves.MOD_VERSION,
     dependencies = "required-after:forge@[" + PassableLeaves.MCF_MINVER + "," + PassableLeaves.MCF_MAXVER + ")",
-    guiFactory = "teamrtg.passableleaves.PassableLeaves$PLGuiConfigFactory",
-    acceptableRemoteVersions = "*"
+    guiFactory = "teamrtg.passableleaves.PassableLeaves$PLGuiConfigFactory"
 )
 public class PassableLeaves
 {
@@ -66,7 +65,7 @@ public class PassableLeaves
     static final String MOD_VERSION = "@MOD_VERSION@";
     static final String MCF_MINVER  = "0.0-MCF+MINVER";
     static final String MCF_MAXVER  = "9001.0-MCF+MAXVER";
-    static final Logger LOGGER      = LogManager.getLogger(MOD_ID);
+    private static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
     @Mod.Instance(MOD_ID) private static PassableLeaves instance;
     @Mod.EventHandler public void initPre   (FMLPreInitializationEvent  event) { proxy.preInit(event); }
