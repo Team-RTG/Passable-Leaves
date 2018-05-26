@@ -1,9 +1,13 @@
 package teamrtg.passableleaves;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.ParametersAreNonnullByDefault;
+
+import com.google.common.collect.Lists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
@@ -16,17 +20,24 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.util.IThreadListener;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.*;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 
+import mcp.MethodsReturnNonnullByDefault;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.ConfigElement;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
@@ -39,21 +50,21 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.server.command.CommandTreeBase;
 
-import com.google.common.collect.Lists;
-import mcp.MethodsReturnNonnullByDefault;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import teamrtg.passableleaves.asm.PassableLeavesCore;
 
 @SuppressWarnings("unused")
 @Mod(
     modid = PassableLeaves.MOD_ID,
     name = PassableLeaves.MOD_NAME,
     version = PassableLeaves.MOD_VERSION,
-    dependencies = "required-after:forge@[" + PassableLeaves.MCF_MINVER + "," + PassableLeaves.MCF_MAXVER + ")",
+    dependencies = "required-after:" + PassableLeavesCore.MOD_ID +"@[1.0.0,)",
     guiFactory = "teamrtg.passableleaves.PassableLeaves$PLGuiConfigFactory"
 )
 public class PassableLeaves
@@ -61,9 +72,8 @@ public class PassableLeaves
     static final String MOD_ID      = "passableleaves";
     static final String MOD_NAME    = "Passable Leaves";
     static final String MOD_VERSION = "@MOD_VERSION@";
-    static final String MCF_MINVER  = "0.0-MCF+MINVER";
-    static final String MCF_MAXVER  = "9001.0-MCF+MAXVER";
     private static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+    static boolean LOCAL_SERVER = true;
 
     @Mod.Instance(MOD_ID) private static PassableLeaves instance;
     @Mod.EventHandler public void initPre   (FMLPreInitializationEvent  event) { proxy.preInit(event); }
@@ -74,8 +84,12 @@ public class PassableLeaves
     @SidedProxy private static CommonProxy proxy;
     private abstract static class CommonProxy {
         void preInit   (FMLPreInitializationEvent  event) {
-            LOGGER.info("Initialising configuration.");
+            LOGGER.debug("Initialising configuration");
             PLConfig.init(event);
+            LOGGER.debug("Registering network messages");
+            NetworkDispatcher.init();
+            LOGGER.debug("Registering a new ConfigSyncHandler");
+            MinecraftForge.EVENT_BUS.register(new ConfigSyncHandler());
         }
         void init      (FMLInitializationEvent     event) {
 
@@ -84,7 +98,7 @@ public class PassableLeaves
             PLConfig.sync();
         }
         void addCommand(FMLServerStartingEvent     event) {
-            LOGGER.info("Registering /" + PLCommandTree.CMD_ROOT + " command.");
+            LOGGER.debug("Registering /" + PLCommandTree.CMD_ROOT + " command");
             event.registerServerCommand(new PLCommandTree());
         }
     }
@@ -313,6 +327,7 @@ public class PassableLeaves
                 .appendText("Setting ").appendSibling(new TextComponentTranslation(cfgProp.getLanguageKey()).setStyle(STYLE_DKAQUA))
                 .appendText(" to: ").appendSibling(new TextComponentString(cfgProp.setValue(value).getString()).setStyle(STYLE_AQUA))
             );
+            NetworkDispatcher.INSTANCE.sendConfigSyncMessageToAll();
         }
     }
 
@@ -330,6 +345,8 @@ public class PassableLeaves
         private static void init(FMLPreInitializationEvent event) {
             if (configFile == null) { configFile = event.getSuggestedConfigurationFile(); }
             if (config == null) { config = new Configuration(configFile); }
+
+            config.setCategoryComment(MOD_ID, "These settings get overridden when connected to a remote server.");
 
             fallDamageReduction = config.get(
                 MOD_ID,
@@ -354,7 +371,7 @@ public class PassableLeaves
                 MOD_ID,
                 "Speed Reduction - Horizontal",
                 75,
-                "The reduced horizontal speed when passing through leaves. (% of normal - this setting has no effect for now)",
+                "The reduced horizontal speed when passing through leaves. (% of normal)",
                 0,
                 100
             ).setLanguageKey(MOD_ID+".config.speedReductionHorizontal");
@@ -363,7 +380,7 @@ public class PassableLeaves
                 MOD_ID,
                 "Speed Reduction - Vertical",
                 75,
-                "The reduced vertical speed when passing through leaves. (% of normal - this setting has no effect for now)",
+                "The reduced vertical speed when passing through leaves. (% of normal)",
                 0,
                 100
             ).setLanguageKey(MOD_ID+".config.speedReductionVertical");
@@ -372,8 +389,17 @@ public class PassableLeaves
         }
 
         private static void sync() {
-            LOGGER.info("Syncing configuration.");
-            if (config.hasChanged()) { config.save(); }
+            if (config.hasChanged()) {
+                LOGGER.debug("Saving config");
+                config.save();
+            }
+            if (LOCAL_SERVER) {
+                LOGGER.debug("Syncing config settings on client");
+                PassableLeaves.fallDamageReduction      = getFallDamageReduction();
+                PassableLeaves.fallDamageThreshold      = getFallDamageThreshold();
+                PassableLeaves.speedReductionHorizontal = getSpeedReductionHorizontal();
+                PassableLeaves.speedReductionVertical   = getSpeedReductionVertical();
+            }
         }
 
         static float   getFallDamageReduction()      { return ((float)fallDamageReduction.getInt())/100; }
@@ -408,7 +434,36 @@ public class PassableLeaves
         @Override public Set<RuntimeOptionCategoryElement> runtimeGuiCategories() { return null; }
     }
 
+    public static final class ConfigSyncHandler {
+        ConfigSyncHandler() {}
 
+        @SubscribeEvent
+        @SideOnly(Side.SERVER)
+        public void onPlayerLoggedIn(PlayerLoggedInEvent event) {
+            if (event.player instanceof EntityPlayerMP) {
+                EntityPlayerMP player = (EntityPlayerMP) event.player;
+                IThreadListener listener = player.getServer();
+                if (listener != null) {
+                    listener.addScheduledTask(() -> NetworkDispatcher.INSTANCE.sendConfigSyncMessageToPlayer(player));
+                }
+            }
+        }
+
+        @SubscribeEvent
+        @SideOnly(Side.CLIENT)
+        public void onClientDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
+            LOCAL_SERVER = true;// Reset, so that a client can sync changes to it's own config while disconnected
+        }
+    }
+
+
+// TODO: The below static fields (initialised to default values) and #onEntityCollidedWithLeaves should probably be
+//       moved to the coremod where they belong. All manipulation of the values can be done from here with
+//       PLConfig#sync and from the sync handler, as this Forge mod is merely a config frontend for the coremod.
+    static float   fallDamageReduction;
+    static int     fallDamageThreshold;
+    static double  speedReductionHorizontal;
+    static double  speedReductionVertical;
     private static final DamageSource DAMAGESOURCE_FALLINTOLEAVES = new DamageSource("fallintoleaves") {
         @Override public ITextComponent getDeathMessage(EntityLivingBase entity) {
             return new TextComponentTranslation(PassableLeaves.MOD_ID+".death.fallintoleaves", entity.getDisplayName());
@@ -423,37 +478,39 @@ public class PassableLeaves
 
             EntityLivingBase livingEntity = (EntityLivingBase)entity;
 
-            // play a sound when an entity is moving through leaves
-            if (world.getTotalWorldTime() % 2 == 0 && (livingEntity.posX != livingEntity.prevPosX || livingEntity.posY != livingEntity.prevPosY || livingEntity.posZ != livingEntity.prevPosZ)) {
-                world.playSound(null, livingEntity.getPosition(), SoundEvents.BLOCK_GRASS_HIT,
-                    SoundCategory.BLOCKS, SoundType.PLANT.getVolume() * 0.5f, SoundType.PLANT.getPitch() * 0.45f);
+            // play a sound when an entity falls into leaves; do this before altering motion
+            if (livingEntity.fallDistance > 3f) {
+                entity.playSound(SoundEvents.BLOCK_GRASS_BREAK, SoundType.PLANT.getVolume() * 0.6f, SoundType.PLANT.getPitch() * 0.65f);
+            }
+            // play a sound when an entity is moving through leaves (only play sound every 5 ticks as to not flood sound events)
+            else if (world.getTotalWorldTime() % 8 == 0 && (entity.posX != entity.prevPosX || entity.posY != entity.prevPosY || entity.posZ != entity.prevPosZ)) {
+                entity.playSound(SoundEvents.BLOCK_GRASS_HIT, SoundType.PLANT.getVolume() * 0.5f, SoundType.PLANT.getPitch() * 0.45f);
             }
 
-            // Riding a mob won't protect you
-            if (entity.isBeingRidden()) {
-                for (Entity ent : entity.getPassengers()) {
-                    onEntityCollidedWithLeaves(world, pos, state, ent);
-                }
-            }
-
-            // Reduce movement speed when inside of leaves, but allow players/mobs to jump out of them
+            // reduce movement speed when inside of leaves, but allow players/mobs to jump out of them
             if (!livingEntity.isJumping) {
-                entity.motionX *= 0.75d;
-                entity.motionY *= 0.75d;
-                entity.motionZ *= 0.75d;
+                entity.motionX *= speedReductionHorizontal;
+                entity.motionY *= speedReductionVertical;
+                entity.motionZ *= speedReductionHorizontal;
             }
 
             // modify falling damage when falling into leaves
-            if (livingEntity.fallDistance > PLConfig.getFallDamageThreshold()) {
-                livingEntity.fallDistance -= PLConfig.getFallDamageThreshold();
+            if (livingEntity.fallDistance > fallDamageThreshold) {
+                livingEntity.fallDistance -= fallDamageThreshold;
                 PotionEffect pe = livingEntity.getActivePotionEffect(MobEffects.JUMP_BOOST);
-                int amount = MathHelper.ceil(livingEntity.fallDistance * PLConfig.getFallDamageReduction() * ((pe == null) ? 1.0f : 0.9f));
+                int amount = MathHelper.ceil(livingEntity.fallDistance * fallDamageReduction * ((pe == null) ? 1.0f : 0.9f));
                 livingEntity.attackEntityFrom(DAMAGESOURCE_FALLINTOLEAVES, amount);
             }
 
             // reset fallDistance
             if (livingEntity.fallDistance > 1f) { livingEntity.fallDistance = 1f; }
+
+            // Riding a mob won't protect you; Process riders last
+            if (entity.isBeingRidden()) {
+                for (Entity ent : entity.getPassengers()) {
+                    onEntityCollidedWithLeaves(world, pos, state, ent);
+                }
+            }
         }
     }
-
 }
