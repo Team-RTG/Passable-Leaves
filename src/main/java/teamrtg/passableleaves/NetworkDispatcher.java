@@ -26,11 +26,13 @@ final class NetworkDispatcher
 
     // Send to all players when a setting is changed on the server
     void sendConfigSyncMessageToAll(){
+        PassableLeaves.LOGGER.debug("Sending a config sync packet to all clients");
         this.dispatcher.sendToAll(new SyncConfigMessage());
     }
 
     // Send to a single player when connecting to a server
     void sendConfigSyncMessageToPlayer(EntityPlayerMP player){
+        PassableLeaves.LOGGER.debug("Sending a config sync packet to {}", player.getName());
         this.dispatcher.sendTo(new SyncConfigMessage(), player);
     }
 
@@ -75,6 +77,7 @@ final class NetworkDispatcher
 
         @Override
         public IMessage onMessage(SyncConfigMessage message, MessageContext ctx) {
+            PassableLeaves.LOGGER.debug("Received a config sync packet from the server, updating settings");
             PassableLeaves.LOCAL_SERVER             = message.isLocalServer;
             PassableLeaves.fallDamageReduction      = message.fallDamageReduction;
             PassableLeaves.fallDamageThreshold      = message.fallDamageThreshold;

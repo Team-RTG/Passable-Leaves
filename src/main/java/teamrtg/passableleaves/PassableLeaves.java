@@ -72,7 +72,7 @@ public class PassableLeaves
     static final String MOD_ID      = "passableleaves";
     static final String MOD_NAME    = "Passable Leaves";
     static final String MOD_VERSION = "@MOD_VERSION@";
-    private static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+    static final Logger LOGGER      = LogManager.getLogger(MOD_ID);
     static boolean LOCAL_SERVER = true;
 
     @Mod.Instance(MOD_ID) private static PassableLeaves instance;
@@ -452,7 +452,9 @@ public class PassableLeaves
         @SubscribeEvent
         @SideOnly(Side.CLIENT)
         public void onClientDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
-            LOCAL_SERVER = true;// Reset, so that a client can sync changes to it's own config while disconnected
+            // Reset, so that a client can sync changes to it's own config while disconnected
+            LOCAL_SERVER = true;
+            PLConfig.sync();
         }
     }
 
