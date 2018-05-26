@@ -1,13 +1,9 @@
 package teamrtg.passableleaves;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
-
-import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
@@ -29,14 +25,9 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.*;
 import net.minecraft.world.World;
 
-import mcp.MethodsReturnNonnullByDefault;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.ConfigElement;
 import net.minecraftforge.common.config.Configuration;
@@ -57,6 +48,10 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.server.command.CommandTreeBase;
 
+import com.google.common.collect.Lists;
+import mcp.MethodsReturnNonnullByDefault;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import teamrtg.passableleaves.asm.PassableLeavesCore;
 
 @SuppressWarnings("unused")
@@ -370,7 +365,7 @@ public class PassableLeaves
             speedReductionHorizontal = config.get(
                 MOD_ID,
                 "Speed Reduction - Horizontal",
-                75,
+                90,
                 "The reduced horizontal speed when passing through leaves. (% of normal)",
                 0,
                 100
@@ -379,7 +374,7 @@ public class PassableLeaves
             speedReductionVertical = config.get(
                 MOD_ID,
                 "Speed Reduction - Vertical",
-                75,
+                90,
                 "The reduced vertical speed when passing through leaves. (% of normal)",
                 0,
                 100
@@ -484,8 +479,8 @@ public class PassableLeaves
             if (livingEntity.fallDistance > 3f) {
                 entity.playSound(SoundEvents.BLOCK_GRASS_BREAK, SoundType.PLANT.getVolume() * 0.6f, SoundType.PLANT.getPitch() * 0.65f);
             }
-            // play a sound when an entity is moving through leaves (only play sound every 5 ticks as to not flood sound events)
-            else if (world.getTotalWorldTime() % 8 == 0 && (entity.posX != entity.prevPosX || entity.posY != entity.prevPosY || entity.posZ != entity.prevPosZ)) {
+            // play a sound when an entity is moving through leaves (only play sound every 6 ticks as to not flood sound events)
+            else if (world.getTotalWorldTime() % 6 == 0 && (entity.posX != entity.prevPosX || entity.posY != entity.prevPosY || entity.posZ != entity.prevPosZ)) {
                 entity.playSound(SoundEvents.BLOCK_GRASS_HIT, SoundType.PLANT.getVolume() * 0.5f, SoundType.PLANT.getPitch() * 0.45f);
             }
 
