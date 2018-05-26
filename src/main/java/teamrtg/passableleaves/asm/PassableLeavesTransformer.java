@@ -76,7 +76,7 @@ public class PassableLeavesTransformer implements IClassTransformer {
     }
 
     public PassableLeavesTransformer() {
-        PassableLeavesCore.LOGGER.info("PassableLeavesTransformer Initialized");
+        PassableLeavesCore.LOGGER.debug("PassableLeavesTransformer Initialized");
     }
 
     @Override
@@ -99,7 +99,7 @@ public class PassableLeavesTransformer implements IClassTransformer {
         }
 
         // getCollisionBox method construction
-        PassableLeavesCore.LOGGER.info("Patching net.minecraft.block.BlockLeaves with an override for net.minecraft.block.Block#getCollisionBox");
+        PassableLeavesCore.LOGGER.debug("Patching net.minecraft.block.BlockLeaves with an override for net.minecraft.block.Block#getCollisionBox");
         LabelNode startLabel = new LabelNode();
         LabelNode endLabel = new LabelNode();
         MethodNode getCollisionBox = new MethodNode(Opcodes.ACC_PUBLIC, Methods.getCollisionBoundingBox.getName(), Methods.getCollisionBoundingBox.getDesc(), null, new String[0]);
@@ -126,7 +126,7 @@ public class PassableLeavesTransformer implements IClassTransformer {
 
 
         // isPassable method construction
-        PassableLeavesCore.LOGGER.info("Patching net.minecraft.block.BlockLeaves with an override for net.minecraft.block.Block#isPassable");
+        PassableLeavesCore.LOGGER.debug("Patching net.minecraft.block.BlockLeaves with an override for net.minecraft.block.Block#isPassable");
         startLabel = new LabelNode();
         endLabel = new LabelNode();
         MethodNode isPassable = new MethodNode(Opcodes.ACC_PUBLIC, Methods.isPassable.getName(), Methods.isPassable.getDesc(), null, new String[0]);
@@ -149,7 +149,7 @@ public class PassableLeavesTransformer implements IClassTransformer {
 
 
         // onEntityCollidedWithBlock method construction
-        PassableLeavesCore.LOGGER.info("Patching net.minecraft.block.BlockLeaves with an override for net.minecraft.block.Block#onEntityCollidedWithBlock");
+        PassableLeavesCore.LOGGER.debug("Patching net.minecraft.block.BlockLeaves with an override for net.minecraft.block.Block#onEntityCollidedWithBlock");
         startLabel = new LabelNode();
         endLabel = new LabelNode();
         MethodNode onEntityCollidedWithBlock = new MethodNode(Opcodes.ACC_PUBLIC, Methods.onEntityCollidedWithBlock.getName(), Methods.onEntityCollidedWithBlock.getDesc(), null, new String[0]);

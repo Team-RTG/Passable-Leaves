@@ -13,35 +13,36 @@ apply from: 'build-common.gradle'
 sourceCompatibility = targetCompatibility = 1.8
 
 group = project.package_base
-archivesBaseName = "${project.name}" + "-" + (project.mc_version as String)
+archivesBaseName = "${project.name}-${project.mc_version}"
+def coremodBaseName = "${project.name}Core-${project.mc_version}"
 version = project.mod_version
-def coremodClassifier = "coremod"
 
 task coreJar(type: Jar) {
     from(sourceSets.main.output) {
         include "teamrtg/passableleaves/asm/**"
     }
-    classifier coremodClassifier
+    from(sourceSets.main.resources) {
+        include "assets/passableleaves/logo.png"
+    }
+    setBaseName coremodBaseName
+    setVersion project.coremod_version
     manifest {
         attributes ([
             "FMLCorePlugin": "teamrtg.passableleaves.asm.PassableLeavesCore",
-            "Maven-Artifact": "${project.group}:${archivesBaseName}-${coremodClassifier}:${project.version}"
+            "Maven-Artifact": "${project.group}:${coremodBaseName}:${project.coremod_version}"
         ])
     }
 }
 
 jar {
-    from(coreJar.archivePath.absolutePath) {
-        include "*"
-    }
     exclude "teamrtg/passableleaves/asm/**"
+    from(coreJar.archivePath.absolutePath) {}
     manifest {
         attributes([
             "FMLAT": "passableleaves_at.cfg",
             "ContainedDeps": coreJar.archivePath.name,
             "Maven-Artifact": "${project.group}:${archivesBaseName}:${project.version}"
         ])
-
     }
     dependsOn coreJar
 }
@@ -52,20 +53,18 @@ minecraft {
     runDir = "run"
     makeObfSourceJar = false
     replace "@MOD_VERSION@", project.version
-    replace "@MC_VERSION@", project.mc_version
-    replace "0.0-MCF+MINVER", project.mcf_minver
-    replace "9001.0-MCF+MAXVER", project.mcf_maxver
     replaceIn "PassableLeaves.java"
+    replace "@COREMOD_VERSION@", project.coremod_version
+    replace "@ACCEPTABLE_MC_VER_RANGE@", project.acceptable_mc_ver_range
+    replaceIn "PassableLeavesCore.java"
 }
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
         include "mcmod.info"
         expand ([
-            "modid"       : project.mod_id,
-            "name"        : project.mod_name,
-            "version"     : project.mod_version,
-            "mcversion"   : project.mc_version,
+            "version"    : project.mod_version,
+            "mcversion"  : project.mc_version
         ])
     }
     from(sourceSets.main.resources.srcDirs) {exclude "mcmod.info"}

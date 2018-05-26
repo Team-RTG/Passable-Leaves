@@ -1,7 +1,7 @@
 [{
-  "modid": "${modid}",
-  "name": "${name}",
-  "description": "Minecraft core mod that makes leaves passable.",
+  "modid": "passableleaves",
+  "name": "PassableLeaves",
+  "description": "Minecraft mod that makes leaves passable.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "https://github.com/Team-RTG/PassableLeaves",
