@@ -23,4 +23,4 @@ passableleaves.command.addendum.save=(saves current settings to config)
 passableleaves.command.addendum.damage=(changes the damage settings)
 passableleaves.command.addendum.speed=(changes the speed reduction settings)
 
-passableleaves.death.fallintoleaves=%1$s fell into leaves and was impaled by branches
+death.fallintoleaves=%1$s fell into leaves and was impaled by branches

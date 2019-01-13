@@ -17,17 +17,19 @@ archivesBaseName = "${project.name}-${project.mc_version}"
 def coremodBaseName = "${project.name}Core-${project.mc_version}"
 version = project.mod_version
 
+reobf { coreJar { mappingType = 'SEARGE' } }
+
 task coreJar(type: Jar) {
-    from(sourceSets.main.output) {
-        include "teamrtg/passableleaves/asm/**"
-    }
+    from(sourceSets.main.output) { include "teamrtg/passableleaves/asm/**" }
     from(sourceSets.main.resources) {
-        include "assets/passableleaves/logo.png"
+        include "assets/logo.png"
+        include "META-INF/passableleaves_at.cfg"
     }
     setBaseName coremodBaseName
     setVersion project.coremod_version
     manifest {
         attributes ([
+            "FMLAT": "passableleaves_at.cfg",
             "FMLCorePlugin": "teamrtg.passableleaves.asm.PassableLeavesCore",
             "Maven-Artifact": "${project.group}:${coremodBaseName}:${project.coremod_version}"
         ])
@@ -36,15 +38,16 @@ task coreJar(type: Jar) {
 
 jar {
     exclude "teamrtg/passableleaves/asm/**"
+    exclude "assets/passableleavescore/**"
+    exclude "META-INF/passableleaves_at.cfg"
     from(coreJar.archivePath.absolutePath) {}
     manifest {
         attributes([
-            "FMLAT": "passableleaves_at.cfg",
             "ContainedDeps": coreJar.archivePath.name,
             "Maven-Artifact": "${project.group}:${archivesBaseName}:${project.version}"
         ])
     }
-    dependsOn coreJar
+    dependsOn reobfCoreJar
 }
 
 minecraft {
@@ -68,5 +71,4 @@ processResources {
         ])
     }
     from(sourceSets.main.resources.srcDirs) {exclude "mcmod.info"}
-    rename "(.+_at.cfg)", "META-INF/\$1"
 }

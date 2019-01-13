@@ -54,7 +54,7 @@ public class PassableLeavesCore implements IFMLLoadingPlugin {
             meta.name         = MOD_NAME;
             meta.version      = "@COREMOD_VERSION@";
             meta.description  = "A transformer for BlockLeaves.";
-            meta.logoFile     = "/assets/passableleaves/logo.png";
+            meta.logoFile     = "/assets/logo.png";
             meta.authorList.add("Team-RTG");
         }
         @Override public VersionRange acceptableMinecraftVersionRange() { return VersionParser.parseRange("@ACCEPTABLE_MC_VER_RANGE@"); }

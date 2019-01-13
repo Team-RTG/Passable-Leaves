@@ -1,7 +1,5 @@
 package teamrtg.passableleaves.asm;
 
-import net.minecraft.launchwrapper.IClassTransformer;
-
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.ClassReader;
@@ -19,8 +17,8 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import teamrtg.passableleaves.asm.PassableLeavesTransformer.Transforms.Fields;
-import teamrtg.passableleaves.asm.PassableLeavesTransformer.Transforms.Methods;
+import net.minecraft.launchwrapper.IClassTransformer;
+
 
 /**
  * This class was originally written by HellFirePvP for the Appalachia addon for RTG.
@@ -34,45 +32,44 @@ import teamrtg.passableleaves.asm.PassableLeavesTransformer.Transforms.Methods;
  */
 public class PassableLeavesTransformer implements IClassTransformer {
 
-    static final class Transforms {
-        private Transforms() {}
-        private static final String[] names = new String[0];
-        enum Methods {
-            // Names must be the deobfuscated method names, These, and/or the obfuscated names, may change over time.
-            getCollisionBoundingBox(
-                "func_180646_a",
-                "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/AxisAlignedBB;"
-            ),
-            isPassable(
-                "func_176205_b",
-                "(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)Z"
-            ),
-            onEntityCollidedWithBlock(
-                "func_180634_a",
-                "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/entity/Entity;)V"
-            );
-            private final String obfName;
-            private final String desc;
-            Methods(String obfName, String desc) {
-                this.obfName = obfName;
-                this.desc = desc;
-                ArrayUtils.add(names, name().toLowerCase());
-            }
-            String getName() { return PassableLeavesCore.isDeobf() ? name() : obfName; }
-            String getDesc() { return desc; }
-            static boolean contains(final String value) { return ArrayUtils.contains(names, value.toLowerCase()); }
+    private static final String[] names = new String[0];
+
+    enum Methods {
+        // Names must be the deobfuscated method names, These, and/or the obfuscated names, may change over time.
+        getCollisionBoundingBox(
+            "func_180646_a",
+            "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/AxisAlignedBB;"
+        ),
+        isPassable(
+            "func_176205_b",
+            "(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)Z"
+        ),
+        onEntityCollidedWithBlock(
+            "func_180634_a",
+            "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/entity/Entity;)V"
+        );
+        private final String obfName;
+        private final String desc;
+        Methods(String obfName, String desc) {
+            this.obfName = obfName;
+            this.desc = desc;
+            ArrayUtils.add(names, name().toLowerCase());
         }
-        enum Fields {
-            NULL_AABB("field_185506_k", "Lnet/minecraft/util/math/AxisAlignedBB;");
-            private final String obfName;
-            private final String desc;
-            Fields(String obfName, String desc) {
-                this.obfName = obfName;
-                this.desc = desc;
-            }
-            String getName() { return PassableLeavesCore.isDeobf() ? this.name() : this.obfName; }
-            String getDesc() { return this.desc; }
+        String getName() { return PassableLeavesCore.isDeobf() ? name() : obfName; }
+        String getDesc() { return desc; }
+        static boolean contains(final String value) { return ArrayUtils.contains(names, value.toLowerCase()); }
+    }
+
+    enum Fields {
+        NULL_AABB("field_185506_k", "Lnet/minecraft/util/math/AxisAlignedBB;");
+        private final String obfName;
+        private final String desc;
+        Fields(String obfName, String desc) {
+            this.obfName = obfName;
+            this.desc = desc;
         }
+        String getName() { return PassableLeavesCore.isDeobf() ? this.name() : this.obfName; }
+        String getDesc() { return this.desc; }
     }
 
     public PassableLeavesTransformer() {
@@ -170,8 +167,8 @@ public class PassableLeavesTransformer implements IClassTransformer {
         onEntityCollidedWithBlock.instructions.add(new VarInsnNode(Opcodes.ALOAD, 3));
         onEntityCollidedWithBlock.instructions.add(new VarInsnNode(Opcodes.ALOAD, 4));
         onEntityCollidedWithBlock.instructions.add(
-            // This has to point to PassableLeaves#onEntityCollidedWithLeaves
-            new MethodInsnNode(Opcodes.INVOKESTATIC, "teamrtg/passableleaves/PassableLeaves", "onEntityCollidedWithLeaves", Methods.onEntityCollidedWithBlock.getDesc(), false)
+            // This has to point to #onEntityCollidedWithLeaves, below
+            new MethodInsnNode(Opcodes.INVOKESTATIC, "teamrtg/passableleaves/asm/PLCollisionHandler", "onEntityCollidedWithLeaves", Methods.onEntityCollidedWithBlock.getDesc(), false)
         );
         onEntityCollidedWithBlock.instructions.add(new InsnNode(Opcodes.RETURN));
         onEntityCollidedWithBlock.instructions.add(endLabel);

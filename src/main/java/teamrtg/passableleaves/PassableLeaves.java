@@ -9,8 +9,6 @@ import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.block.SoundType;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
@@ -18,23 +16,14 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.MobEffects;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.DamageSource;
 import net.minecraft.util.IThreadListener;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.World;
 
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraftforge.common.MinecraftForge;
@@ -57,6 +46,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.server.command.CommandTreeBase;
 
+import teamrtg.passableleaves.asm.PLCollisionHandler;
 import teamrtg.passableleaves.asm.PassableLeavesCore;
 
 @SuppressWarnings("unused")
@@ -395,10 +385,10 @@ public class PassableLeaves
             }
             if (LOCAL_SERVER) {
                 LOGGER.debug("Syncing config settings on client");
-                PassableLeaves.fallDamageReduction      = getFallDamageReduction();
-                PassableLeaves.fallDamageThreshold      = getFallDamageThreshold();
-                PassableLeaves.speedReductionHorizontal = getSpeedReductionHorizontal();
-                PassableLeaves.speedReductionVertical   = getSpeedReductionVertical();
+                PLCollisionHandler.setFallDamageReduction(getFallDamageReduction());
+                PLCollisionHandler.setFallDamageThreshold(getFallDamageThreshold());
+                PLCollisionHandler.setSpeedReductionHorizontal(getSpeedReductionHorizontal());
+                PLCollisionHandler.setSpeedReductionVertical(getSpeedReductionVertical());
             }
         }
 
@@ -407,7 +397,6 @@ public class PassableLeaves
         static double  getSpeedReductionHorizontal() { return speedReductionHorizontal.getDouble()/100; }
         static double  getSpeedReductionVertical()   { return speedReductionVertical.getDouble()/100; }
     }
-    @SideOnly(Side.CLIENT)
     public  static final class PLGuiConfig extends GuiConfig {
         PLGuiConfig(GuiScreen parent) {
             super(parent, getConfigElements(), MOD_ID, false, false, I18n.format(MOD_ID+".config.maintitle"));
@@ -426,7 +415,6 @@ public class PassableLeaves
             PLConfig.sync();
         }
     }
-    @SideOnly(Side.CLIENT)
     public  static final class PLGuiConfigFactory implements IModGuiFactory {
         @Override public void initialize(Minecraft mc) {}
         @Override public boolean hasConfigGui() { return true; }
@@ -455,64 +443,6 @@ public class PassableLeaves
             // Reset, so that a client can sync changes to it's own config while disconnected
             LOCAL_SERVER = true;
             PLConfig.sync();
-        }
-    }
-
-
-// TODO: The below static fields (initialised to default values) and #onEntityCollidedWithLeaves should probably be
-//       moved to the coremod where they belong. All manipulation of the values can be done from here with
-//       PLConfig#sync and from the sync handler, as this Forge mod is merely a config frontend for the coremod.
-    static float   fallDamageReduction;
-    static int     fallDamageThreshold;
-    static double  speedReductionHorizontal;
-    static double  speedReductionVertical;
-    private static final DamageSource DAMAGESOURCE_FALLINTOLEAVES = new DamageSource("fallintoleaves") {
-        @Override public ITextComponent getDeathMessage(EntityLivingBase entity) {
-            return new TextComponentTranslation(PassableLeaves.MOD_ID+".death.fallintoleaves", entity.getDisplayName());
-        }
-    };
-
-    // This method name has to match the method that is called in PassableLeavesTransformer
-    @SuppressWarnings("WeakerAccess")
-    public static void onEntityCollidedWithLeaves(World world, BlockPos pos, IBlockState state, Entity entity) {
-
-        if (entity instanceof EntityLivingBase) {
-
-            EntityLivingBase livingEntity = (EntityLivingBase)entity;
-
-            // play a sound when an entity falls into leaves; do this before altering motion
-            if (livingEntity.fallDistance > 3f) {
-                entity.playSound(SoundEvents.BLOCK_GRASS_BREAK, SoundType.PLANT.getVolume() * 0.6f, SoundType.PLANT.getPitch() * 0.65f);
-            }
-            // play a sound when an entity is moving through leaves (only play sound every 5 ticks as to not flood sound events)
-            else if (world.getTotalWorldTime() % 8 == 0 && (entity.posX != entity.prevPosX || entity.posY != entity.prevPosY || entity.posZ != entity.prevPosZ)) {
-                entity.playSound(SoundEvents.BLOCK_GRASS_HIT, SoundType.PLANT.getVolume() * 0.5f, SoundType.PLANT.getPitch() * 0.45f);
-            }
-
-            // reduce movement speed when inside of leaves, but allow players/mobs to jump out of them
-            if (!livingEntity.isJumping) {
-                entity.motionX *= speedReductionHorizontal;
-                entity.motionY *= speedReductionVertical;
-                entity.motionZ *= speedReductionHorizontal;
-            }
-
-            // modify falling damage when falling into leaves
-            if (livingEntity.fallDistance > fallDamageThreshold) {
-                livingEntity.fallDistance -= fallDamageThreshold;
-                PotionEffect pe = livingEntity.getActivePotionEffect(MobEffects.JUMP_BOOST);
-                int amount = MathHelper.ceil(livingEntity.fallDistance * fallDamageReduction * ((pe == null) ? 1.0f : 0.9f));
-                livingEntity.attackEntityFrom(DAMAGESOURCE_FALLINTOLEAVES, amount);
-            }
-
-            // reset fallDistance
-            if (livingEntity.fallDistance > 1f) { livingEntity.fallDistance = 1f; }
-
-            // Riding a mob won't protect you; Process riders last
-            if (entity.isBeingRidden()) {
-                for (Entity ent : entity.getPassengers()) {
-                    onEntityCollidedWithLeaves(world, pos, state, ent);
-                }
-            }
         }
     }
 }

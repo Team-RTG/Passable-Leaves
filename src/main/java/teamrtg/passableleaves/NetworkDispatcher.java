@@ -13,6 +13,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 
 import teamrtg.passableleaves.PassableLeaves.PLConfig;
+import teamrtg.passableleaves.asm.PLCollisionHandler;
 
 final class NetworkDispatcher
 {
@@ -78,11 +79,11 @@ final class NetworkDispatcher
         @Override
         public IMessage onMessage(SyncConfigMessage message, MessageContext ctx) {
             PassableLeaves.LOGGER.debug("Received a config sync packet from the server, updating settings");
-            PassableLeaves.LOCAL_SERVER             = message.isLocalServer;
-            PassableLeaves.fallDamageReduction      = message.fallDamageReduction;
-            PassableLeaves.fallDamageThreshold      = message.fallDamageThreshold;
-            PassableLeaves.speedReductionHorizontal = message.speedReductionHorizontal;
-            PassableLeaves.speedReductionVertical   = message.speedReductionVertical;
+            PassableLeaves.LOCAL_SERVER = message.isLocalServer;
+            PLCollisionHandler.setFallDamageReduction(message.fallDamageReduction);
+            PLCollisionHandler.setFallDamageThreshold(message.fallDamageThreshold);
+            PLCollisionHandler.setSpeedReductionHorizontal(message.speedReductionHorizontal);
+            PLCollisionHandler.setSpeedReductionVertical(message.speedReductionVertical);
             return null;
         }
     }

@@ -8,7 +8,7 @@
   "updateUrl": "",
   "authorList": ["Team-RTG"],
   "credits": "Based on code donated by HellFirePvP for the Appalachia mod.",
-  "logoFile": "assets/passableleaves/logo.png",
+  "logoFile": "assets/logo.png",
   "screenshots": [],
   "dependencies": []
 }]
