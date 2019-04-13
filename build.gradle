@@ -38,7 +38,6 @@ task coreJar(type: Jar) {
 
 jar {
     exclude "teamrtg/passableleaves/asm/**"
-    exclude "assets/passableleavescore/**"
     exclude "META-INF/passableleaves_at.cfg"
     from(coreJar.archivePath.absolutePath) {}
     manifest {
@@ -51,14 +50,14 @@ jar {
 }
 
 minecraft {
-    version = project.mcf_version
-    mappings = project.mcp_mappings
-    runDir = "run"
-    makeObfSourceJar = false
-    replace "@MOD_VERSION@", project.version
+    setVersion  "${project.mc_version}-${project.mcf_version}"
+    setMappings project.mcp_mappings
+    setRunDir   "run"
+    setMakeObfSourceJar false
+    replace   "@MOD_VERSION@",             project.version
+    replace   "@COREMOD_VERSION@",         project.coremod_version
+    replace   "@ACCEPTABLE_MC_VER_RANGE@", project.acceptable_mc_ver_range
     replaceIn "PassableLeaves.java"
-    replace "@COREMOD_VERSION@", project.coremod_version
-    replace "@ACCEPTABLE_MC_VER_RANGE@", project.acceptable_mc_ver_range
     replaceIn "PassableLeavesCore.java"
 }
 
