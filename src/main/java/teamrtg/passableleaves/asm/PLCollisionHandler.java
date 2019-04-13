@@ -2,7 +2,6 @@ package teamrtg.passableleaves.asm;
 
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.MobEffects;
@@ -13,15 +12,17 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 
 public final class PLCollisionHandler {
     private PLCollisionHandler() {}
 
     private static final DamageSource DAMAGESOURCE_FALLINTOLEAVES = new DamageSource("fallintoleaves") {
+        @SuppressWarnings("deprecation")
         @Override public ITextComponent getDeathMessage(EntityLivingBase entity) {
-            return (I18n.hasKey("death.fallintoleaves"))
-                ? new TextComponentTranslation("death.fallintoleaves", entity.getName())
+            return I18n.canTranslate("death.fallintoleaves")
+                ? new TextComponentTranslation("death.fallintoleaves", entity.getDisplayName())
                 : entity.getDisplayName().appendText(" fell into leaves and was impaled by branches");
         }
     };

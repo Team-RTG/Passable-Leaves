@@ -26,7 +26,6 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.ConfigElement;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
@@ -34,8 +33,6 @@ import net.minecraftforge.fml.client.IModGuiFactory;
 import net.minecraftforge.fml.client.config.GuiConfig;
 import net.minecraftforge.fml.client.config.IConfigElement;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
@@ -43,7 +40,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.server.command.CommandTreeBase;
 
 import teamrtg.passableleaves.asm.PLCollisionHandler;
@@ -51,58 +47,31 @@ import teamrtg.passableleaves.asm.PassableLeavesCore;
 
 @SuppressWarnings("unused")
 @Mod(
-    modid = PassableLeaves.MOD_ID,
-    name = PassableLeaves.MOD_NAME,
-    version = PassableLeaves.MOD_VERSION,
-    dependencies = "required-after:" + PassableLeavesCore.MOD_ID +"@[1.0.0,)",
-    guiFactory = "teamrtg.passableleaves.PassableLeaves$PLGuiConfigFactory"
+    modid        = PassableLeaves.MOD_ID,
+    name         = "Passable Leaves",
+    version      = "@MOD_VERSION@",
+    dependencies = "required-after:" + PassableLeavesCore.MOD_ID +"@[@COREMOD_VERSION@,)",
+    guiFactory   = "teamrtg.passableleaves.PassableLeaves$PLGuiConfigFactory"
 )
 public class PassableLeaves
 {
-    static final String MOD_ID      = "passableleaves";
-    static final String MOD_NAME    = "Passable Leaves";
-    static final String MOD_VERSION = "@MOD_VERSION@";
-    static final Logger LOGGER      = LogManager.getLogger(MOD_ID);
+    static final String MOD_ID  = "passableleaves";
+    static final Logger LOGGER  = LogManager.getLogger(MOD_ID);
     static boolean LOCAL_SERVER = true;
 
     @Mod.Instance(MOD_ID) private static PassableLeaves instance;
-    @Mod.EventHandler public void initPre   (FMLPreInitializationEvent  event) { proxy.preInit(event); }
-    @Mod.EventHandler public void init      (FMLInitializationEvent     event) { proxy.init(event); }
-    @Mod.EventHandler public void initPost  (FMLPostInitializationEvent event) { proxy.postInit(event); }
-    @Mod.EventHandler public void addcommand(FMLServerStartingEvent     event) { proxy.addCommand(event); }
-
-    @SidedProxy private static CommonProxy proxy;
-    private abstract static class CommonProxy {
-        void preInit   (FMLPreInitializationEvent  event) {
-            LOGGER.debug("Initialising configuration");
-            PLConfig.init(event);
-            LOGGER.debug("Registering network messages");
-            NetworkDispatcher.init();
-            LOGGER.debug("Registering a new ConfigSyncHandler");
-            MinecraftForge.EVENT_BUS.register(new ConfigSyncHandler());
-        }
-        void init      (FMLInitializationEvent     event) {
-
-        }
-        void postInit  (FMLPostInitializationEvent event) {
-            PLConfig.sync();
-        }
-        void addCommand(FMLServerStartingEvent     event) {
-            LOGGER.debug("Registering /" + PLCommandTree.CMD_ROOT + " command");
-            event.registerServerCommand(new PLCommandTree());
-        }
+    @Mod.EventHandler public void initPre   (final FMLPreInitializationEvent  event) {
+        LOGGER.debug("Initialising configuration");
+        PLConfig.init(event);
+        LOGGER.debug("Registering network messages");
+        NetworkDispatcher.init();
     }
-    public static final class ClientProxy extends CommonProxy {
-        @Override public void preInit   (FMLPreInitializationEvent  event) { super.preInit(event); }
-        @Override public void init      (FMLInitializationEvent     event) { super.init(event); }
-        @Override public void postInit  (FMLPostInitializationEvent event) { super.postInit(event); }
-        @Override public void addCommand(FMLServerStartingEvent     event) { super.addCommand(event);}
+    @Mod.EventHandler public void initPost  (final FMLPostInitializationEvent event) {
+        PLConfig.sync();
     }
-    public static final class ServerProxy extends CommonProxy {
-        @Override public void preInit   (FMLPreInitializationEvent  event) { super.preInit(event); }
-        @Override public void init      (FMLInitializationEvent     event) { super.init(event); }
-        @Override public void postInit  (FMLPostInitializationEvent event) { super.postInit(event); }
-        @Override public void addCommand(FMLServerStartingEvent     event) { super.addCommand(event); }
+    @Mod.EventHandler public void addcommand(final FMLServerStartingEvent     event) {
+        LOGGER.debug("Registering /" + PLCommandTree.CMD_ROOT + " command");
+        event.registerServerCommand(new PLCommandTree());
     }
 
     @ParametersAreNonnullByDefault
@@ -422,12 +391,11 @@ public class PassableLeaves
         @Override public Set<RuntimeOptionCategoryElement> runtimeGuiCategories() { return null; }
     }
 
-    public static final class ConfigSyncHandler {
-        ConfigSyncHandler() {}
-
+    @Mod.EventBusSubscriber(value = Side.SERVER)
+    public static final class ConfigSyncHandlerServer {
+        private ConfigSyncHandlerServer() {}
         @SubscribeEvent
-        @SideOnly(Side.SERVER)
-        public void onPlayerLoggedIn(PlayerLoggedInEvent event) {
+        public static void onPlayerLoggedIn(PlayerLoggedInEvent event) {
             if (event.player instanceof EntityPlayerMP) {
                 EntityPlayerMP player = (EntityPlayerMP) event.player;
                 IThreadListener listener = player.getServer();
@@ -436,10 +404,13 @@ public class PassableLeaves
                 }
             }
         }
+    }
 
+    @Mod.EventBusSubscriber(value = Side.CLIENT)
+    public static final class ConfigSyncHandlerClient {
+        private ConfigSyncHandlerClient() {}
         @SubscribeEvent
-        @SideOnly(Side.CLIENT)
-        public void onClientDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
+        public static void onClientDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
             // Reset, so that a client can sync changes to it's own config while disconnected
             LOCAL_SERVER = true;
             PLConfig.sync();
