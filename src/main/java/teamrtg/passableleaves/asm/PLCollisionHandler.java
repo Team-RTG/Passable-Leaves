@@ -42,11 +42,11 @@ public final class PLCollisionHandler {
     }
 
     public static void setSpeedReductionHorizontal(final double val) {
-        speedReductionHorizontal = (val < 0.0d) ? 0.0d : ((val > 1.0d) ? 1.0d : val);
+        speedReductionHorizontal = (val < 0.05d) ? 0.05d : ((val > 1.0d) ? 1.0d : val);
     }
 
     public static void setSpeedReductionVertical(final double val) {
-        speedReductionVertical = (val < 0.0d) ? 0.0d : ((val > 1.0d) ? 1.0d : val);
+        speedReductionVertical = (val < 0.05d) ? 0.05d : ((val > 1.0d) ? 1.0d : val);
     }
 
     // This method name has to match the method that is called in #transform, above
