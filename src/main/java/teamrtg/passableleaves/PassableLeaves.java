@@ -33,7 +33,6 @@ import net.minecraftforge.fml.client.IModGuiFactory;
 import net.minecraftforge.fml.client.config.GuiConfig;
 import net.minecraftforge.fml.client.config.IConfigElement;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -66,9 +65,6 @@ public class PassableLeaves
         LOGGER.debug("Registering network messages");
         NetworkDispatcher.init();
     }
-    @Mod.EventHandler public void initPost  (final FMLPostInitializationEvent event) {
-        PLConfig.sync();
-    }
     @Mod.EventHandler public void addcommand(final FMLServerStartingEvent     event) {
         LOGGER.debug("Registering /" + PLCommandTree.CMD_ROOT + " command");
         event.registerServerCommand(new PLCommandTree());
@@ -91,7 +87,7 @@ public class PassableLeaves
         private static final String LANG_KEY_ADDENDUM_STATUS  = LANG_KEY_BASE+".addendum.status";
         private static final String LANG_KEY_ADDENDUM_SAVE    = LANG_KEY_BASE+".addendum.save";
 
-        private static final Style  STYLE_ERROR               = new Style().setUnderlined(true).setColor(TextFormatting.DARK_RED);
+        private static final Style  STYLE_ERROR               = new Style().setColor(TextFormatting.RED);
         private static final Style  STYLE_DKGREEN             = new Style().setColor(TextFormatting.DARK_GREEN);
         private static final Style  STYLE_GOLD                = new Style().setColor(TextFormatting.GOLD);
         private static final Style  STYLE_DKAQUA              = new Style().setColor(TextFormatting.DARK_AQUA);
@@ -160,8 +156,12 @@ public class PassableLeaves
             @Override public String getName() { return NAME; }
             @Override public String getUsage(ICommandSender sender) { return getUsageForBasicCommand(this, this.parentName, LANG_KEY_ADDENDUM_SAVE); }
             @Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
-                sender.sendMessage(new TextComponentString("  ").appendText("Saving current settings to PassableLeaves config.").setStyle(STYLE_DKGREEN));
-                PLConfig.sync();
+                if (PLConfig.config.hasChanged()) {
+                    sender.sendMessage(new TextComponentString("  ").appendText("Saving current settings to Passable Leaves config.").setStyle(STYLE_DKGREEN));
+                    PLConfig.config.save();
+                } else {
+                    sender.sendMessage(new TextComponentString("  ").appendText("Config settings have not changed.").setStyle(STYLE_ERROR));
+                }
             }
         }
 
@@ -249,7 +249,9 @@ public class PassableLeaves
             return new TextComponentString("    /")
                 .appendSibling(new TextComponentString(parent+" "+cmd.getName()).setStyle(STYLE_DKAQUA)).appendText(" <")
                 .appendSibling(new TextComponentString(cfgProp.getMinValue()).setStyle(STYLE_GRAY)).appendText(" - ")
-                .appendSibling(new TextComponentString(cfgProp.getMaxValue()).setStyle(STYLE_GRAY)).appendText(">").getFormattedText();
+                .appendSibling(new TextComponentString(cfgProp.getMaxValue()).setStyle(STYLE_GRAY)).appendText(">")
+                .appendSibling(new TextComponentString(" (Default: " + cfgProp.getDefault() + ")").setStyle(STYLE_GRAY))
+                .getFormattedText();
         }
 
         private static void executor(ICommand cmd, ICommandSender sender, String[] args, Property cfgProp) {
@@ -258,6 +260,7 @@ public class PassableLeaves
                     .appendSibling(new TextComponentTranslation(cfgProp.getLanguageKey()).setStyle(STYLE_DKAQUA))
                     .appendText(" ").appendSibling(new TextComponentTranslation(LANG_KEY_CURRENT_SETTING))
                     .appendText(" ").appendSibling(new TextComponentString(cfgProp.getString()).setStyle(STYLE_AQUA))
+                    .appendSibling(new TextComponentString(" (Default: " + cfgProp.getDefault() + ")").setStyle(STYLE_GRAY))
                 );
                 return;
             }
@@ -286,6 +289,7 @@ public class PassableLeaves
                 .appendText("Setting ").appendSibling(new TextComponentTranslation(cfgProp.getLanguageKey()).setStyle(STYLE_DKAQUA))
                 .appendText(" to: ").appendSibling(new TextComponentString(cfgProp.setValue(value).getString()).setStyle(STYLE_AQUA))
             );
+            PLConfig.sync();
             NetworkDispatcher.INSTANCE.sendConfigSyncMessageToAll();
         }
     }
@@ -312,7 +316,8 @@ public class PassableLeaves
                 "Fall Damage Reduction",
                 50,
                 "The percentage of normal damage taken when taking damage from falling into leaves." + Configuration.NEW_LINE +
-                "The damage will be reduced by a further 10% with the Jump Boost potion effect.",
+                "The damage will be reduced by a further 10% with the Jump Boost potion effect." + Configuration.NEW_LINE +
+                "[Minimum: 0 (no damage), Maximum: 100 (full damage), Default: 50]",
                 0,
                 100
             ).setLanguageKey(MOD_ID + ".config.fallDamageReduction");
@@ -321,7 +326,8 @@ public class PassableLeaves
                 MOD_ID,
                 "Fall Damage Threshold",
                 20,
-                "When falling into leaves, the (block) distance a player or mob has to fall before taking damage.",
+                "When falling into leaves, the (block) distance a player or mob has to fall before taking damage." + Configuration.NEW_LINE +
+                "[Range: 5 ~ 255, Default: 20]",
                 5,
                 255
             ).setLanguageKey(MOD_ID + ".config.fallDamageThreshold");
@@ -330,8 +336,9 @@ public class PassableLeaves
                 MOD_ID,
                 "Speed Reduction - Horizontal",
                 75,
-                "The reduced horizontal speed when passing through leaves. (% of normal)",
-                0,
+                "The reduced horizontal speed when passing through leaves. (% of normal)" + Configuration.NEW_LINE +
+                "[Range: 5 ~ 100, Default: 75] (Hint: minecraft:web = 25)",
+                5,
                 100
             ).setLanguageKey(MOD_ID+".config.speedReductionHorizontal");
 
@@ -339,21 +346,19 @@ public class PassableLeaves
                 MOD_ID,
                 "Speed Reduction - Vertical",
                 75,
-                "The reduced vertical speed when passing through leaves. (% of normal)",
-                0,
+                "The reduced vertical speed when passing through leaves. (% of normal)" + Configuration.NEW_LINE +
+                "[Range: 5 ~ 100, Default: 75] (Hint: minecraft:web = 5)",
+                5,
                 100
             ).setLanguageKey(MOD_ID+".config.speedReductionVertical");
 
             if (config.hasChanged()) { config.save(); }
+            sync();
         }
 
         private static void sync() {
-            if (config.hasChanged()) {
-                LOGGER.debug("Saving config");
-                config.save();
-            }
             if (LOCAL_SERVER) {
-                LOGGER.debug("Syncing config settings on client");
+                LOGGER.debug("Syncing config settings.");
                 PLCollisionHandler.setFallDamageReduction(getFallDamageReduction());
                 PLCollisionHandler.setFallDamageThreshold(getFallDamageThreshold());
                 PLCollisionHandler.setSpeedReductionHorizontal(getSpeedReductionHorizontal());
@@ -381,7 +386,10 @@ public class PassableLeaves
         }
         @Override public void onGuiClosed() {
             super.onGuiClosed();
-            PLConfig.sync();
+            if (PLConfig.config.hasChanged()) {
+                PLConfig.config.save();
+                PLConfig.sync();
+            }
         }
     }
     public  static final class PLGuiConfigFactory implements IModGuiFactory {
