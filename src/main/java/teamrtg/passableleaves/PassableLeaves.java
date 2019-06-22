@@ -461,11 +461,6 @@ public class PassableLeaves
     static int     fallDamageThreshold;
     static double  speedReductionHorizontal;
     static double  speedReductionVertical;
-    private static final DamageSource DAMAGESOURCE_FALLINTOLEAVES = new DamageSource("fallintoleaves") {
-        @Override public ITextComponent getDeathMessage(EntityLivingBase entity) {
-            return new TextComponentTranslation(PassableLeaves.MOD_ID+".death.fallintoleaves", entity.getDisplayName());
-        }
-    };
 
     // This method name has to match the method that is called in PassableLeavesTransformer
     @SuppressWarnings("WeakerAccess")
@@ -494,9 +489,8 @@ public class PassableLeaves
             // modify falling damage when falling into leaves
             if (livingEntity.fallDistance > fallDamageThreshold) {
                 livingEntity.fallDistance -= fallDamageThreshold;
-                PotionEffect pe = livingEntity.getActivePotionEffect(MobEffects.JUMP_BOOST);
-                int amount = MathHelper.ceil(livingEntity.fallDistance * fallDamageReduction * ((pe == null) ? 1.0f : 0.9f));
-                livingEntity.attackEntityFrom(DAMAGESOURCE_FALLINTOLEAVES, amount);
+                int amount = MathHelper.ceil(livingEntity.fallDistance * fallDamageReduction);
+                livingEntity.attackEntityFrom(DamageSource.FALL, amount);
             }
 
             // reset fallDistance
