@@ -1,10 +1,14 @@
 package teamrtg.passableleaves;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -17,9 +21,8 @@ import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.MobEffects;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.IThreadListener;
@@ -32,9 +35,11 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.ConfigElement;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.client.IModGuiFactory;
 import net.minecraftforge.fml.client.config.GuiConfig;
 import net.minecraftforge.fml.client.config.IConfigElement;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -44,6 +49,7 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.server.command.CommandTreeBase;
@@ -53,6 +59,8 @@ import mcp.MethodsReturnNonnullByDefault;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import teamrtg.passableleaves.asm.PassableLeavesCore;
+import teamrtg.passableleaves.block.BlockNewPassableLeaf;
+import teamrtg.passableleaves.block.BlockOldPassableLeaf;
 
 @SuppressWarnings("unused")
 @Mod(
@@ -84,6 +92,7 @@ public class PassableLeaves
             LOGGER.debug("Registering network messages");
             NetworkDispatcher.init();
             LOGGER.debug("Registering a new ConfigSyncHandler");
+            MinecraftForge.EVENT_BUS.register(PassableLeaves.class);
             MinecraftForge.EVENT_BUS.register(new ConfigSyncHandler());
         }
         void init      (FMLInitializationEvent     event) {
@@ -461,11 +470,6 @@ public class PassableLeaves
     static int     fallDamageThreshold;
     static double  speedReductionHorizontal;
     static double  speedReductionVertical;
-    private static final DamageSource DAMAGESOURCE_FALLINTOLEAVES = new DamageSource("fallintoleaves") {
-        @Override public ITextComponent getDeathMessage(EntityLivingBase entity) {
-            return new TextComponentTranslation(PassableLeaves.MOD_ID+".death.fallintoleaves", entity.getDisplayName());
-        }
-    };
 
     // This method name has to match the method that is called in PassableLeavesTransformer
     @SuppressWarnings("WeakerAccess")
@@ -494,9 +498,8 @@ public class PassableLeaves
             // modify falling damage when falling into leaves
             if (livingEntity.fallDistance > fallDamageThreshold) {
                 livingEntity.fallDistance -= fallDamageThreshold;
-                PotionEffect pe = livingEntity.getActivePotionEffect(MobEffects.JUMP_BOOST);
-                int amount = MathHelper.ceil(livingEntity.fallDistance * fallDamageReduction * ((pe == null) ? 1.0f : 0.9f));
-                livingEntity.attackEntityFrom(DAMAGESOURCE_FALLINTOLEAVES, amount);
+                int amount = MathHelper.ceil(livingEntity.fallDistance * fallDamageReduction);
+                livingEntity.attackEntityFrom(DamageSource.FALL, amount);
             }
 
             // reset fallDistance
@@ -508,6 +511,46 @@ public class PassableLeaves
                     onEntityCollidedWithLeaves(world, pos, state, ent);
                 }
             }
+        }
+    }
+
+
+    @SubscribeEvent
+    public static void registerBlocks(RegistryEvent.Register<Block> event) {
+        BlockOldPassableLeaf oldLeafEdit = (BlockOldPassableLeaf) (new BlockOldPassableLeaf()).setUnlocalizedName("leaves").setRegistryName(Objects.requireNonNull(Blocks.LEAVES.getRegistryName()));
+        BlockNewPassableLeaf newLeafEdit = (BlockNewPassableLeaf) (new BlockNewPassableLeaf()).setUnlocalizedName("leaves").setRegistryName(Objects.requireNonNull(Blocks.LEAVES2.getRegistryName()));
+
+        event.getRegistry().register(oldLeafEdit);
+        event.getRegistry().register(newLeafEdit);
+
+        Field f, f2;
+
+        try {
+            f = ReflectionHelper.findField(Blocks.class, "field_150362_t");
+        }
+        catch (ReflectionHelper.UnableToFindFieldException e) {
+            f = ReflectionHelper.findField(Blocks.class, "LEAVES");
+        }
+
+        try {
+            f2 = ReflectionHelper.findField(Blocks.class, "field_150361_u");
+        }
+        catch (ReflectionHelper.UnableToFindFieldException e) {
+            f2 = ReflectionHelper.findField(Blocks.class, "LEAVES2");
+        }
+
+        try {
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL);
+            modifiersField.setInt(f2, f2.getModifiers() & ~Modifier.FINAL);
+
+            f.set(null, oldLeafEdit);
+            f2.set(null, newLeafEdit);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            FMLCommonHandler.instance().exitJava(77, true);
         }
     }
 }
